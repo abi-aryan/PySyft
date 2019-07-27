@@ -1,41 +1,45 @@
+group: travis_latest
 language: python
+cache: pip
 python:
-  - "3.6"
-
-# install server dependencies
-before_install:
-  - "sudo apt-get -y install musl-dev g++ libgmp3-dev libmpfr-dev ca-certificates libmpc-dev redis-server"
-  - "wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;"
-  - "bash miniconda.sh -b -p $HOME/miniconda3"
-  - "export PATH=$HOME/miniconda3/bin:$PATH"
-  - "conda update -q -y conda"
-  - "sudo service redis-server start"
-
-# install dependencies
+  #- 2.7
+  - 3.6
+  #- nightly
+  #- pypy
+  #- pypy3
+matrix:
+  allow_failures:
+    - python: nightly
+    - python: pypy
+    - python: pypy3
 install:
-  - "conda create -n openmined python=3.6 -y"
-  - "source activate openmined"
-  - "conda install -c anaconda -y mpc"
-  - "conda install -c anaconda -y gmp"
-  - "conda install -c anaconda -y mpfr"
-  - "conda install -y gmpy2  --channel conda-forge"
-  - "source activate openmined"
-  - "pip install -r test-requirements.txt"
-  - "pip install redis"
-  - "python setup.py install"
-  - "git clone https://github.com/OpenMined/Capsule.git"
-  - "cd Capsule/"
-  - "pip install -r requirements.txt"
-  - "python setup.py install"
-  - "python capsule_zmq/local_server.py > /dev/null &"
-  - "cd ../../"
-
-# run tests
+  - sudo apt-get update
+  - hash -r
+  - pip3 install -r requirements.txt >build.log
+  - pip3 install -r requirements_dev.txt >build.log
+  - pip3 install flake8
+  #- pip3 install flake8-docstrings
+  - pip3 install flake8-comprehensions
+  - pip3 install pep8-naming
+  - python setup.py install >> build.log
+before_script:
+  # stop the build if there are Python syntax errors or undefined
+  # names
+  - flake8 --config=.flake8 .
+  - black --check --verbose .
+  # exit-zero treats all errors as warnings.
+  # diverting from the standard 79 character line length in
+  # accordance with this:
+  # https://www.python.org/dev/peps/pep-0008/#a-foolish-consistency-is-the-hobgoblin-of-little-minds
+  - flake8 . --count --exit-zero --statistics --select=E,F,W,C90
 script:
-  - coverage run -m pytest && flake8 --exclude=PySyft/Capsule/*.py --ignore=E501
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-
+  - coverage run -m pytest
+  - coverage report --fail-under 95 -m
+  # ensuring coverage of tests stays at 100 until entire coverage can be 100
+  - coverage report --fail-under 100 -m --include="test/*"
+  # - bash scripts/execute_notebooks.sh
+  # - if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
 notifications:
-    slack: openmined:vOUE1d9jSb6V7R1r6zrjRD4E
+  on_success: change
+  # `always` will be the setting below once code changes slow down
+  on_failure: change

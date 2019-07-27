@@ -1,5 +1,7 @@
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages
+from setuptools import setup
 
 
 # Utility function to read the README file.
@@ -10,25 +12,24 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-requirements = read('requirements.txt').split()
+requirements = read("requirements.txt").split()
+
 
 setup(
     name="syft",
-    version="0.1.0",
-    author="Amber Trask",
+    version="0.1.21a1",
+    author="Andrew Trask",
     author_email="contact@openmined.org",
-    description=("A library for Encrypted Deep Learning Algorithms"),
+    description=("A Library for Private, Secure Deep Learning"),
     license="Apache-2.0",
-    keywords="deep learning artificial intelligence homomorphic encryption",
-    packages=find_packages(exclude=['notebooks', 'test*', 'dist']),
+    keywords="deep learning artificial intelligence privacy secure multi-party computation federated learning differential privacy",
+    packages=find_packages(exclude=["docs", "examples", "dist"]),
     include_package_data=True,
-    long_description=read('README.md'),
-    url='github.com/OpenMined/Syft',
-    classifiers=[
-        "Development Status :: 1 - Alpha",
-    ],
-    scripts=['bin/syft_cmd'],
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
+    url="https://github.com/OpenMined/PySyft",
     install_requires=requirements,
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-flake8']
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest", "pytest-flake8"],
+    classifiers=["Programming Language :: Python :: 3", "Operating System :: OS Independent"],
 )

@@ -1,48 +1,45 @@
-.PHONY: install develop test notebook \
-	docker-build-base docker-build docker-build-dev docker-run \
-	run-redis run-capsule run-allservices
+venv: venv/bin/activate
 
-# Platform-agnostic targets, will run locally and inside Docker,
-# provided that the right dependencies are present
-install:
-	pip3 install -r requirements.txt
-	python3 setup.py install
+venv/bin/activate: requirements.txt requirements_dev.txt
+	test -e venv/bin/activate || virtualenv venv
+	. venv/bin/activate; pip install -Ur requirements.txt; pip install -Ur requirements_dev.txt; python setup.py install
+	touch venv/bin/activate
 
-develop:
-	pip3 install -r dev-requirements.txt
-	python3 setup.py develop
+install_hooks: venv
+	venv/bin/pre-commit install
 
-test:
-	@# Remove pyc files to avoid conflict if tests are run locally
-	@# and inside container at the same time
-	@find . -name '*.pyc' -exec rm -f '{}' \;
-	pip3 install -r test-requirements.txt
-	pytest && flake8 --ignore=E501
+notebook: venv
+	(. venv/bin/activate; \
+		python setup.py install; \
+		python -m ipykernel install --user --name=pysyft; \
+		jupyter notebook;\
+	)
 
-notebook:
-	jupyter notebook --allow-root --ip=0.0.0.0
+lab: venv
+	(. venv/bin/activate; \
+		python setup.py install; \
+		python -m ipykernel install --user --name=pysyft; \
+		jupyter lab;\
+	)
 
-# Docker-related targets, to build and run a prod and a dev images
-docker-build-base:
-	docker build -f dockerfiles/Dockerfile.base -t pysyft-base:local .
+.PHONY: test
+test: venv
+	(. venv/bin/activate; \
+		python setup.py install; \
+		venv/bin/coverage run setup.py test;\
+		venv/bin/coverage report -m --fail-under 95;\
+	)
 
-docker-build: docker-build-base
-	docker build -f dockerfiles/Dockerfile -t openmined/pysyft:local .
-
-docker-build-dev: docker-build-base
-	docker build -f dockerfiles/Dockerfile.dev -t openmined/pysyft-dev:local .
-
-image = openmined/pysyft:local
-docker-run:
-	docker run -it --rm \
-		-v "$(PWD)":/PySyft \
-		-p 8888:8888 \
-		"$(image)" sh
-
-run-redis:
-	redis-server &
-
-run-capsule:
-	python3 /usr/bin/Capsule/capsule_zmq/local_server.py &
-
-run-allservices: run-redis run-capsule
+.PHONY: docs
+docs: venv
+	(. venv/bin/activate; \
+    	cd docs; \
+		rm -rf ./_modules; \
+		rm -rf ./_autosummary; \
+		rm -rf _build; \
+		sphinx-apidoc -o ./_modules ../syft; \
+		make markdown; \
+        cd ../; \
+	)
+clean:
+	rm -rf venv

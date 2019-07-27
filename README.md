@@ -1,173 +1,111 @@
-# Syft
+# Introduction
 
-[![Chat on Slack](https://img.shields.io/badge/chat-on%20slack-7A5979.svg)](https://openmined.slack.com/messages/team_pysyft)
-[![Build Status](https://travis-ci.org/OpenMined/PySyft.svg?branch=master)](https://travis-ci.org/OpenMined/PySyft)
-[![codecov](https://codecov.io/gh/openmined/pysyft/branch/master/graph/badge.svg)](https://codecov.io/gh/openmined/pysyft)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/OpenMined/PySyft/master) [![Build Status](https://travis-ci.org/OpenMined/PySyft.svg?branch=torch_1)](https://travis-ci.org/OpenMined/PySyft) [![Chat on Slack](https://img.shields.io/badge/chat-on%20slack-7A5979.svg)](https://openmined.slack.com/messages/team_pysyft) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmatthew-mcateer%2FPySyft.svg?type=small)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmatthew-mcateer%2FPySyft?ref=badge_small)
 
-> Homomorphically Encrypted Deep Learning Library
+PySyft is a Python library for secure, private Deep Learning. PySyft decouples private data from model training, using [Multi-Party Computation (MPC)](https://en.wikipedia.org/wiki/Secure_multi-party_computation) within PyTorch. Join the movement on [Slack](http://slack.openmined.org/).
 
-The goal of this library is to give the user the ability to efficiently train Deep Learning models in a homomorphically encrypted state, without needing to be an expert in either. Furthermore, by understanding the characteristics of both Deep Learning and Homomorphic Encryption, we hope to find a very performant combinations of the two. See the [notebooks](./notebooks) folder for tutorials on how to use the library. Also, check the [main demonstration](https://github.com/OpenMined/sonar) from the Sonar project.
+## PySyft in Detail
 
-- [Setup with Docker](#setup-with-doker)
-- [Local setup](#local-setup)
-- [Notebooks](#notebooks)
-- [Testing](#testing)
-- [For Contributors](#for-contributors)
-- [Relevant Literature](#relevant-literature)
-- [License](#license)
+A more detailed explanation of PySyft can be found in the [paper on arxiv](https://arxiv.org/abs/1811.04017)
 
-## Setup with Docker
+PySyft has also been explained in video form by [Siraj Raval](https://www.youtube.com/watch?v=39hNjnhY7cY&feature=youtu.be&a=)
 
-The fastest way to get started is to use the pre-assembled Docker image (works on all major operating systems). Alternatively, one can manually set up all the dependencies and develop locally.
+## Pre-Installation
 
-### Get Docker
-Install Docker following the instructions on the [website](https://www.docker.com/).
+Optionally, we recommend that you install PySyft within the [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/overview.html) virtual environment. If you are using Windows, I suggest installing [Anaconda and using the Anaconda Prompt](https://docs.anaconda.com/anaconda/user-guide/getting-started/) to work from the command line.
 
-For macOS users with [Homebrew](https://brew.sh/) installed, use:
-```sh
-brew cask install docker
-open -a docker
+```bash
+conda create -n pysyft python=3
+conda activate pysyft # some older version of conda require "source activate pysyft" instead.
+conda install jupyter notebook
 ```
 
-You can ensure that Docker is properly installed and running by checking: `docker --version`.
+## Installation
 
-### Run PySyft in a container
-First, clone this repository and navigate into its folder:
+> PySyft supports Python >= 3.6 and PyTorch 1.1.0
 
-```sh
-git clone https://github.com/OpenMined/PySyft.git
-cd PySyft
+```bash
+pip install syft
 ```
 
-Now, start a container based on [openmined/pysyft](https://hub.docker.com/r/openmined/pysyft/):
-```sh
-make docker-build
-make docker-run
+If you have an installation error regarding zstd, run this command and then re-try installing syft.
+
+```bash
+pip install --upgrade --force-reinstall zstd
 ```
-In this container you'll be able to open a Python shell, import the library and develop with it.
+If this still doesn't work, and you happen to be on OSX, make sure you have [OSX command line tools](https://railsapps.github.io/xcode-command-line-tools.html) installed and try again.
 
-However, if you want to use Jupyter, try the provided notebooks, and make changes to the source,
-you should create your personal development image:
-```sh
-make docker-build-dev
-make docker-run image=openmined/pysyft-dev:local
-```
+You can also install PySyft from source on a variety of operating systems by following this [installation guide](https://github.com/OpenMined/PySyft/blob/dev/INSTALLATION.md).
 
-Inside the container you can run any make targets such as `test` or `notebook`.
+## Run Local Notebook Server
 
-## Local setup
+All the examples can be played with by running the command
 
-### Prerequisites
-
-- Make sure Python 3.5+ in installed on your machine by checking `python3 --version`
-- Install the base libraries listed [here](https://github.com/OpenMined/PySonar/blob/master/README.md#base-libraries)
-- Set up a virtual environment for the Python libraries (optional, recommended)
-- Install [Capsule](https://github.com/OpenMined/Capsule) dependency if you are going to develop and run tests.
-
-### Python Requirements
-
-The Python dependencies are listed in [`requirements.txt`](./requirements.txt) and can be installed through
-```sh
-pip3 install -r requirements.txt
-```
-
-Additional test and development dependencies such as scikit-learn and Jupyter are
-listed in [`dev-requirements.txt`](./dev-requirements.txt):
-```sh
-pip3 install -r dev-requirements.txt
-```
-
-#### PySyft installation
-If you simply want to to _use_ PySyft, it is enough to install the library with:
-```sh
-python3 setup.py install
-```
-
-Instead, if you want to make changes to the source, fix bugs, add features etc.,
-it's recommended to install PySyft in development mode:
-```sh
-python3 setup.py develop
-```
-
-#### Anaconda
-
-```sh
-bash install_for_anaconda_users.sh
-```
-
-__Note:__ if after running the above script, you have troubles importing Syft in your Jupyter notebook, try this:
-
-```sh
-# activate your env, if you haven't already
-source activate openmined  
-pip install ipykernel
-python -m ipykernel install --user --name=openmined
-```
-
-#### Windows
-
-```sh
-conda install -c conda-forge gmpy2
-pip install -r requirements.txt
-python setup.py install
-```
-
-## Notebooks
-The make target `notebook` will launch a Jupyter server (either locally or in the container).
-```sh
+```bash
 make notebook
 ```
 
-## Testing
-The make target `test` will run all tests with `pytest` and `flake8` (either locally or in the container).
-```sh
-make test
+and selecting the pysyft kernel
+
+## Use the Docker image
+
+Instead of installing all the dependencies on your computer, you can run a notebook server (which comes with Pysyft installed) using [Docker](https://www.docker.com/). All you will have to do is start the container like this:
+
+```bash
+$ docker container run openmined/pysyft-notebook
 ```
 
-## For Contributors
-If you are interested in contributing to Syft, first check out our [Contributor Quickstart Guide](https://github.com/OpenMined/Docs/blob/master/contributing/quickstart.md) and then sign into our [Slack Team](https://openmined.slack.com/) channel #team_pysyft to let us know which projects sound interesting to you! (or propose your own!).
+You can use the provided link to access the jupyter notebook (the link is only accessible from your local machine).
 
-## Relevant Literature
-As both Homomorphic Encryption and Deep Learning are still somewhat sparsely known, below is a curated list of relevant reading materials to bring you up to speed with the major concepts and themes of these exciting fields.
+You can also set the directory from which the server will serve notebooks (default is /workspace).
 
-### Encrypted Deep Learning - Recommended Reading:
-- [How to build a fully encrypted AI model (trained on unencrypted data)](http://iamtrask.github.io/2017/03/17/safe-ai/)
-- [Simple secure protocol for federated machine learning (using a python-paillier library)](https://blog.n1analytics.com/distributed-machine-learning-and-partially-homomorphic-encryption-1/)
-- [Prototype for using encrypted AI to preserve user privacy (in python)](http://iamtrask.github.io/2017/06/05/homomorphic-surveillance/)
-- [Manual for Using Homomorphic Encryption for Bioinformatics (paper)](https://www.microsoft.com/en-us/research/wp-content/uploads/2015/11/ManualHE-3.pdf)
+```bash
+$ docker container run -e WORKSPACE_DIR=/root openmined/pysyft-notebook
+```
 
-### Homomorphic Encryption - Recommended Reading:
-- [A Comparison of the Homomorphic Encryption Schemes](https://eprint.iacr.org/2014/062.pdf)
-- [Homomorphic Encryption API Software Library](http://heat-h2020-project.blogspot.co.uk/2017/02/homomorphic-encryption-api-software.html)
-- [Faster Homomorphic Function Evaluation using Non-Integral Base Encoding](http://heat-h2020-project.blogspot.co.uk/2017/)
+You could also build the image on your own and run it locally:
 
-### Relevant Papers:
-- [Encrypted accelerated least squares regression](http://proceedings.mlr.press/v54/esperanca17a/esperanca17a.pdf)
-- [PSML 2017 - Abstracts](https://sites.google.com/view/psml/program/abstracts)
-- [Encrypted statistical machine learning: new privacy
-preserving methods](https://arxiv.org/pdf/1508.06845.pdf)
-- [A review of homomorphic encryption and software
-tools for encrypted statistical machine learning](https://arxiv.org/pdf/1508.06574.pdf)
-- [Privacy-Preserving Distributed Linear Regression on High-Dimensional Data](https://eprint.iacr.org/2016/892)
-- [Secure Computation With Fixed-Point Numbers](https://www1.cs.fau.de/filepool/publications/octavian_securescm/secfp-fc10.pdf)
-- [Scalable and secure logistic regression via homomorphic encryption](https://pdfs.semanticscholar.org/d24c/81f1e2904ba6ec3f341161865ef93247855b.pdf)
-- [ML Confidential: Machine Learning on Encrypted Data](https://eprint.iacr.org/2012/323.pdf)
-- [CryptoNets: Applying Neural Networks to Encrypted Data with High Throughput and Accuracy](http://proceedings.mlr.press/v48/gilad-bachrach16.pdf)
-- [Privacy-Preserving Visual Learning Using Doubly Permuted Homomorphic Encryption](https://arxiv.org/pdf/1704.02203.pdf)
+```bash
+$ cd docker-image
+$ docker image build -t pysyft-notebook .
+$ docker container run pysyft-notebook
+```
 
-### Related Libraries:
-- [HomomorphicEncryption - An R package for fully homomorphic encryption](http://www.louisaslett.com/HomomorphicEncryption/#details)
-- [A Secure Multiparty Computation (MPC) protocol for computing linear regression on vertically distributed datasets](https://github.com/iamtrask/linreg-mpc)
-- [Dask Tutorial](https://github.com/dask/dask-tutorial)
-- [Charm-crypto](http://charm-crypto.io/)
+More information about how to use this image can be found [on docker hub](https://hub.docker.com/r/openmined/pysyft-notebook)
 
-### Related Blogs:
-- [Private Deep Learning with MPC - A Simple Tutorial from Scratch](https://mortendahl.github.io/2017/04/17/private-deep-learning-with-mpc/)
-- [Secret Sharing, Part 1 - Distributing Trust and Work](https://mortendahl.github.io/2017/06/04/secret-sharing-part1/)
-- [Secret Sharing, Part 2 - Efficient Sharing with the Fast Fourier Transform](https://mortendahl.github.io/2017/06/24/secret-sharing-part2/)
-- [Distributed machine learning and partially homomorphic encryption (Part 1)](https://blog.n1analytics.com/distributed-machine-learning-and-partially-homomorphic-encryption-1/)
-- [Distributed machine learning and partially homomorphic encryption (Part 2)](https://blog.n1analytics.com/distributed-machine-learning-and-partially-homomorphic-encryption-2/)
-- [Tutorial: How to verify crowdsourced training data using a Known Answer Review Policy](https://blog.mturk.com/tutorial-how-to-verify-crowdsourced-training-data-using-a-known-answer-review-policy-85596fb55ed)
+## Try out the Tutorials
+
+A comprehensive list of tutorials can be found [here](https://github.com/OpenMined/PySyft/tree/master/examples/tutorials)
+
+These tutorials cover how to perform techniques such as federated learning and differential privacy using PySyft.
+
+## High-level Architecture
+
+![alt text](art/PySyft-Arch.png "High-level Architecture")
+
+## Start Contributing
+
+The guide for contributors can be found [here](https://github.com/OpenMined/PySyft/tree/master/CONTRIBUTING.md). It covers all that you need to know to start contributing code to PySyft in an easy way.
+
+Also join the rapidly growing community of 3700+ on [Slack](http://slack.openmined.org). The slack community is very friendly and great about quickly answering questions about the use and development of PySyft!
+
+## Troubleshooting
+
+We have written an installation example in [this colab notebook](https://colab.research.google.com/drive/14tNU98OKPsP55Y3IgFtXPfd4frqbkrxK), you can use it as is to start working with PySyft on the colab cloud, or use this setup to fix your installation locally.
+
+## Organizational Contributions
+
+We are very grateful for contributions to PySyft from the following organizations!
+
+[<img src="https://github.com/udacity/private-ai/blob/master/udacity-logo-vert-white.png?raw=true" alt="Udacity" width="200"/>](https://udacity.com/) | [<img src="https://raw.githubusercontent.com/coMindOrg/federated-averaging-tutorials/master/images/comindorg_logo.png" alt="coMind" width="200" height="130"/>](https://github.com/coMindOrg/federated-averaging-tutorials) | [<img src="https://arkhn.org/img/arkhn_logo_black.svg" alt="Arkhn" width="200" height="130"/>](http://ark.hn) | [<img src="https://raw.githubusercontent.com/dropoutlabs/files/master/dropout-labs-logo-white-2500.png" alt="Dropout Labs" width="200"/>](https://dropoutlabs.com/)
+--------------------------------------------------------------|--------------------------------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------
+
+## Disclaimer
+
+Do NOT use this code to protect data (private or otherwise) - at present it is very insecure. Come back in a couple months.
 
 ## License
-[Apache-2.0](https://github.com/OpenMined/PySyft/blob/master/LICENSE) by OpenMined contributors
+
+[Apache License 2.0](https://github.com/OpenMined/PySyft/blob/master/LICENSE)
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmatthew-mcateer%2FPySyft.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmatthew-mcateer%2FPySyft?ref=badge_large)
