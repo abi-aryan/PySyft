@@ -31,7 +31,7 @@ base_types = {int, float, str, bool, bytes, bytearray, complex}
 one = lambda _args: 1
 
 # dict to specify the action depending of the type found
-type_rule = {
+type_action = {
     list: lambda _args: [build_rule(a) for a in _args],
     tuple: lambda _args: tuple([build_rule(a) for a in _args]),
     dict: one,  # FIXME This is for additiveShareTensor.child, it can be confusing and AST.child
@@ -52,10 +52,10 @@ type_rule = {
 forward_func = {
     PointerTensor: lambda p: (_ for _ in ()).throw(RemoteObjectFoundError(p)),
     torch.Tensor: lambda i: i.child
-    if hasattr(i, "child")
+    if has_attr(i, "child")
     else (_ for _ in ()).throw(PureTorchTensorFoundError),
     torch.nn.Parameter: lambda i: i.child
-    if hasattr(i, "child")
+    if has_attr(i, "child")
     else (_ for _ in ()).throw(PureTorchTensorFoundError),
     LoggingTensor: lambda i: i.child,
     FixedPrecisionTensor: lambda i: i.child,
@@ -85,8 +85,8 @@ backward_func = {
 
 # Methods or functions whose signature changes a lot and that we don't want to "cache", because
 # they have an arbitrary number of tensors in args which can trigger unexpected behaviour
-ambiguous_methods = {"__getitem__", "_getitem_public", "view", "permute", "add_", "sub_"}
-ambiguous_functions = {"torch.unbind", "unbind", "torch.stack", "stack", "torch.mean", "torch.sum"}
+variable_methods = {"__getitem__", "_getitem_public", "view", "permute", "add_", "sub_"}
+variable_functions = {"torch.unbind", "unbind", "torch.stack", "stack", "torch.mean", "torch.sum"}
 
 
 def hook_method_args(attr, method_self, args, kwargs):
@@ -114,7 +114,7 @@ def hook_method_args(attr, method_self, args, kwargs):
     attr_id = type(method_self).__name__ + "." + attr
 
     try:
-        assert attr not in ambiguous_methods
+        assert attr not in variable_methods
 
         # Load the utility function to transform the args
         hook_args = hook_method_args_functions[attr_id]
@@ -148,7 +148,7 @@ def hook_function_args(attr, args, kwargs, return_args_type=False):
         (- the type of the tensors in the arguments)
     """
     try:
-        assert attr not in ambiguous_functions
+        assert attr not in variable_functions
         # Load the utility function to transform the args
         # TODO rename registry or use another one than for methods
         hook_args = hook_method_args_functions[attr]
@@ -177,7 +177,7 @@ def hook_function_args(attr, args, kwargs, return_args_type=False):
 def build_hook_args_function(args, return_tuple=False):
     """
     Build the function f that hook the arguments:
-    f(args) = new_args
+    hooking(args) = new_args
     """
     # Inspect the call to find tensor arguments and return a rule whose
     # structure is the same as the args object, with 1 where there was
@@ -192,7 +192,7 @@ def build_hook_args_function(args, return_tuple=False):
     return args_hook_function, get_tensor_type_function
 
 
-def hook_response(attr, response, wrap_type, wrap_args={}, new_self=None):
+def hooking(attr, response, wrap_type, wrap_args={}, new_self=None):
     """
     When executing a command, arguments are inspected and all tensors are replaced
     with their child attribute until a pointer or a torch tensor is found (for
@@ -233,7 +233,7 @@ def hook_response(attr, response, wrap_type, wrap_args={}, new_self=None):
     attr_id = f"{attr}@{wrap_type.__name__}.{response_is_tuple}.{hash_wrap_args}"
 
     try:
-        assert attr not in ambiguous_functions
+        assert attr not in variable_functions
 
         # Load the utility function to transform the args
         response_hook_function = hook_method_response_functions[attr_id]
@@ -272,6 +272,7 @@ def build_hook_response_function(response, wrap_type, wrap_args):
     response_hook_function = build_response_hook(response, rule, wrap_type, wrap_args)
     return response_hook_function
 
+## ISSUE: Why not rename build_rule to hooking. That way you can combine hooking for args and hooking to pointer and have to define only a single function????
 
 def build_rule(args):
     """
